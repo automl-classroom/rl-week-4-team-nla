@@ -134,8 +134,8 @@ class DQNAgent(AbstractAgent):
         # TODO: implement exponential‐decayin
         # ε = ε_final + (ε_start - ε_final) * exp(-total_steps / ε_decay)
         # Currently, it is constant and returns the starting value ε
-
-        return self.epsilon_start
+        eps = self.epsilon_final + (self.epsilon_start - self.epsilon_final) * np.exp(-self.total_steps / self.epsilon_decay)
+        return eps
 
     def predict_action(
         self, state: np.ndarray, evaluate: bool = False
