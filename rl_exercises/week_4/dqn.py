@@ -264,6 +264,8 @@ class DQNAgent(AbstractAgent):
         ep_reward = 0.0
         recent_rewards: List[float] = []
 
+        log = []
+        
         for frame in range(1, num_frames + 1):
             action = self.predict_action(state)
             next_state, reward, done, truncated, _ = self.env.step(action)
@@ -287,12 +289,13 @@ class DQNAgent(AbstractAgent):
                 if len(recent_rewards) % 10 == 0:
                     # TODO: compute avg over last eval_interval episodes and print
                     avg = np.mean(recent_rewards[-10:])
+                    log.append((frame, avg))
                     print(
                         f"Frame {frame}, AvgReward(10): {avg:.2f}, ε={self.epsilon():.3f}"
                     )
 
         print("Training complete.")
-
+        return log
 
 @hydra.main(config_path="../configs/agent/", config_name="dqn", version_base="1.1")
 def main(cfg: DictConfig):
@@ -312,8 +315,16 @@ def main(cfg: DictConfig):
                     target_update_freq=cfg.target_update_freq,
                     seed=cfg.seed)
     
-    agent.train(num_frames=cfg.num_frames)
-
+    log = agent.train(num_frames=cfg.num_frames)
+    frames, avg_rewards = zip(*logs)
+    plt.figure()
+    plt.plot(frames, avg_rewards)
+    plt.xlabel("Frames")
+    plt.ylabel("Average Reward")
+    #plt.title(cfg["name"])
+    plt.grid(True)
+    #plt.savefig(f"plots/{cfg['name']}.png")
+    plt.close()
 
 if __name__ == "__main__":
     main()
