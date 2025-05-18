@@ -161,16 +161,15 @@ class DQNAgent(AbstractAgent):
         if evaluate:
             # TODO: select purely greedy action from Q(s)
             with torch.no_grad():
-                qvals = ...  # noqa: F841
-
-            action = None
+                qvals = self.q(torch.tensor(state).unsqueeze(0))  # noqa: F841
+                action = int(torch.argmax(qvals, dim=1).item())
         else:
             if np.random.rand() < self.epsilon():
-                # TODO: sample random action
-                action = None
+                action = self.env.action_space.sample()
             else:
                 # TODO: select purely greedy action from Q(s)
-                action = None
+                qvals = self.q(torch.tensor(state).unsqueeze(0))  # noqa: F841
+                action = int(torch.argmax(qvals, dim=1).item())
 
         return action
 
@@ -287,7 +286,7 @@ class DQNAgent(AbstractAgent):
                 # logging
                 if len(recent_rewards) % 10 == 0:
                     # TODO: compute avg over last eval_interval episodes and print
-                    avg = np.mean(recent_rewards[-10:]
+                    avg = np.mean(recent_rewards[-10:])
                     print(
                         f"Frame {frame}, AvgReward(10): {avg:.2f}, ε={self.epsilon():.3f}"
                     )
@@ -302,8 +301,18 @@ def main(cfg: DictConfig):
     set_seed(env, cfg.seed)
 
     # 3) TODO: instantiate & train the agent
-    agent = ...
-    agent.train(...)
+    agent = DQNAgent(env, 
+                    buffer_capacity=cfg.buffer_capacity,
+                    batch_size=cfg.batch_size,
+                    lr=cfg.lr,
+                    gamma=cfg.gamma,
+                    epsilon_start=cfg.epsilon_start,
+                    epsilon_final=cfg.epsilon_final,
+                    epsilon_decay=cfg.epsilon_decay,
+                    target_update_freq=cfg.target_update_freq,
+                    seed=cfg.seed)
+    
+    agent.train(num_frames=cfg.num_frames)
 
 
 if __name__ == "__main__":
